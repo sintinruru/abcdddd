@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>景點詳情 | 壽豐尋寶巴</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="spot-detail-page">
+    <!-- Hero 圖片區 -->
+    <div class="spot-detail-hero" id="spotHero">
+        <button class="spot-detail-back" onclick="history.back()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <div class="spot-detail-status" id="spotStatus">
+            <i class="fas fa-lock"></i>
+            <span>未收集</span>
+        </div>
+        <i class="fas fa-mountain" id="spotIcon"></i>
+    </div>
+
+    <!-- 內容區 -->
+    <div class="spot-detail-content">
+        <!-- 基本資訊卡 -->
+        <div class="spot-detail-card">
+            <h1 class="spot-detail-title" id="spotTitle">景點名稱</h1>
+            
+            <div class="spot-detail-meta" id="spotMeta">
+                <!-- 由 JavaScript 生成 -->
+            </div>
+
+            <div class="section-heading">
+                <i class="fas fa-info-circle"></i>
+                景點介紹
+            </div>
+            <p class="spot-description" id="spotDescription"></p>
+        </div>
+
+        <!-- 詳細資訊卡 -->
+        <div class="spot-detail-card">
+            <div class="section-heading">
+                <i class="fas fa-map-marked-alt"></i>
+                詳細資訊
+            </div>
+            
+            <div id="spotInfo">
+                <!-- 由 JavaScript 生成 -->
+            </div>
+
+            <!-- 小提示 -->
+            <div class="tips-box" id="spotTips">
+                <div class="tips-box-title">
+                    <i class="fas fa-lightbulb"></i>
+                    旅遊小提示
+                </div>
+                <div class="tips-box-content" id="tipsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 打卡按鈕 -->
+    <button class="checkin-button" id="checkinBtn" onclick="goToCheckin()">
+        <i class="fas fa-qrcode"></i>
+        <span>立即打卡</span>
+    </button>
+
+    <script src="spots-data.js"></script>
+    <script>
+        // 從 URL 取得景點 ID
+        const urlParams = new URLSearchParams(window.location.search);
+        const spotId = parseInt(urlParams.get('id'));
+        
+        // 取得景點資料
+        const spot = spotsData.find(s => s.id === spotId);
+        
+        if (!spot) {
+            alert('找不到景點資料！');
+            window.location.href = 'map.html';
+        }
+
+        // 檢查是否已收集
+        const collection = JSON.parse(localStorage.getItem('collection')) || [];
+        const isCollected = collection.some(c => c.id === spotId);
+
+        // 路線顏色
+        const routeColors = {
+            'nature': '#66bb6a 0%, #43a047 100%',
+            'culture': '#ffa726 0%, #fb8c00 100%',
+            'special': '#42a5f5 0%, #1e88e5 100%'
+        };
+
+        // 路線標籤
+        const routeLabels = {
+            'nature': '自然生態',
+            'culture': '文化體驗',
+            'special': '特色體驗'
+        };
+
+        // 難度資訊
+        const difficultyInfo = {
+            'easy': { text: '簡單', color: '#4caf50' },
+            'normal': { text: '普通', color: '#ff9800' },
+            'hard': { text: '困難', color: '#f44336' }
+        };
+
+        // 設定 Hero 區
+        document.getElementById('spotHero').style.background = 
+            `linear-gradient(135deg, ${routeColors[spot.route]})`;
+        document.getElementById('spotIcon').className = `fas ${spot.icon}`;
+
+        // 設定狀態
+        const statusEl = document.getElementById('spotStatus');
+        if (isCollected) {
+            statusEl.innerHTML = '<i class="fas fa-check-circle"></i><span>已收集</span>';
+            statusEl.style.background = 'rgba(255, 255, 255, 0.95)';
+            statusEl.style.color = '#4caf50';
+        }
+
+        // 設定標題
+        document.getElementById('spotTitle').textContent = spot.name;
+
+        // 設定 Meta 資訊
+        const diff = difficultyInfo[spot.difficulty];
+        document.getElementById('spotMeta').innerHTML = `
+            <div class="meta-badge">
+                <i class="fas fa-route"></i>
+                ${routeLabels[spot.route]}
+            </div>
+            <div class="meta-badge" style="background: ${diff.color}; color: white;">
+                <i class="fas fa-signal"></i>
+                ${diff.text}
+            </div>
+            <div class="meta-badge" style="background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-light) 100%); color: white;">
+                <i class="fas fa-star"></i>
+                +${spot.exp} EXP
+            </div>
+        `;
+
+        // 設定描述
+        document.getElementById('spotDescription').textContent = spot.fullDescription;
+
+        // 設定詳細資訊
+        document.getElementById('spotInfo').innerHTML = `
+            <div class="info-row">
+                <div class="info-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">地址</div>
+                    <div class="info-text">${spot.address}</div>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">開放時間</div>
+                    <div class="info-text">${spot.openTime}</div>
+                </div>
+            </div>
+        `;
+
+        // 設定小提示
+        document.getElementById('tipsContent').textContent = spot.tips;
+
+        // 設定打卡按鈕
+        const checkinBtn = document.getElementById('checkinBtn');
+        if (isCollected) {
+            checkinBtn.classList.add('collected');
+            checkinBtn.innerHTML = '<i class="fas fa-check"></i><span>已經收集此景點</span>';
+            checkinBtn.onclick = null;
+        }
+
+        // 前往打卡頁面
+        function goToCheckin() {
+            window.location.href = `checkin.html?id=${spotId}`;
+        }
+    </script>
+</body>
+</html>

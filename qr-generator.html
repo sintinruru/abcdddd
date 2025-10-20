@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code 生成器 | 壽豐尋寶巴</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .qr-generator-page {
+            min-height: 100vh;
+            background: var(--cream-bg);
+            padding: 80px 16px 40px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: var(--text-gray);
+        }
+
+        .qr-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .qr-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .qr-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .qr-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .qr-spot-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-light) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        .qr-spot-info {
+            text-align: left;
+            flex: 1;
+        }
+
+        .qr-spot-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+
+        .qr-spot-id {
+            font-size: 12px;
+            color: var(--text-gray);
+            font-family: monospace;
+        }
+
+        .qr-code-container {
+            margin: 20px 0;
+            padding: 16px;
+            background: #f5f5f5;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+        }
+
+        .qr-code-canvas {
+            border-radius: 8px;
+        }
+
+        .qr-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .qr-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .qr-btn-primary {
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-light) 100%);
+            color: white;
+        }
+
+        .qr-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(124, 179, 66, 0.3);
+        }
+
+        .qr-btn-secondary {
+            background: white;
+            color: var(--primary-green);
+            border: 2px solid var(--primary-green);
+        }
+
+        .qr-btn-secondary:hover {
+            background: var(--primary-green);
+            color: white;
+        }
+
+        .print-all-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-light) 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(124, 179, 66, 0.4);
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .print-all-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(124, 179, 66, 0.5);
+        }
+
+        /* 列印樣式 */
+        @media print {
+            body {
+                background: white;
+            }
+
+            .navbar,
+            .page-header,
+            .qr-actions,
+            .print-all-btn {
+                display: none !important;
+            }
+
+            .qr-generator-page {
+                padding: 0;
+            }
+
+            .qr-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+                page-break-inside: avoid;
+            }
+
+            .qr-card {
+                page-break-inside: avoid;
+                box-shadow: none;
+                border: 2px solid #ddd;
+                margin-bottom: 20px;
+            }
+
+            .qr-code-container {
+                background: white;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .qr-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .print-all-btn {
+                width: 56px;
+                height: 56px;
+                font-size: 20px;
+                bottom: 16px;
+                right: 16px;
+            }
+        }
+    </style>
+</head>
+<body class="qr-generator-page">
+    <!-- 導航列 -->
+    <nav class="navbar">
+        <div class="container">
+            <button class="nav-icon-btn" onclick="history.back()" style="margin-right: auto;">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="nav-brand">
+                <span>QR Code 生成器</span>
+            </div>
+            <div style="width: 40px;"></div>
+        </div>
+    </nav>
+
+    <!-- 頁面標題 -->
+    <div class="page-header">
+        <h1 class="page-title">景點 QR Code</h1>
+        <p class="page-subtitle">列印這些 QR Code 並放置在對應景點，讓遊客掃描打卡！</p>
+    </div>
+
+    <!-- QR Code 網格 -->
+    <div class="qr-grid" id="qrGrid">
+        <!-- 由 JavaScript 生成 -->
+    </div>
+
+    <!-- 列印全部按鈕 -->
+    <button class="print-all-btn" onclick="printAllQR()" title="列印全部 QR Code">
+        <i class="fas fa-print"></i>
+    </button>
+
+    <script src="spots-data.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script>
+        // 生成所有 QR Code
+        function generateAllQR() {
+            const qrGrid = document.getElementById('qrGrid');
+            
+            spotsData.forEach(spot => {
+                // 創建 QR Code 卡片
+                const card = document.createElement('div');
+                card.className = 'qr-card';
+                card.id = `qr-card-${spot.id}`;
+                
+                // QR Code 內容格式
+                const qrContent = `SHOUFENG_SPOT_${spot.id}`;
+                
+                // 路線顏色
+                const routeColors = {
+                    'nature': '#66bb6a',
+                    'culture': '#ffa726',
+                    'special': '#42a5f5'
+                };
+                
+                card.innerHTML = `
+                    <div class="qr-card-header">
+                        <div class="qr-spot-icon" style="background: ${routeColors[spot.route]};">
+                            <i class="fas ${spot.icon}"></i>
+                        </div>
+                        <div class="qr-spot-info">
+                            <div class="qr-spot-name">${spot.name}</div>
+                            <div class="qr-spot-id">${qrContent}</div>
+                        </div>
+                    </div>
+                    <div class="qr-code-container" id="qr-${spot.id}"></div>
+                    <div class="qr-actions">
+                        <button class="qr-btn qr-btn-primary" onclick="downloadQR(${spot.id}, '${spot.name}')">
+                            <i class="fas fa-download"></i>
+                            下載
+                        </button>
+                        <button class="qr-btn qr-btn-secondary" onclick="printSingleQR(${spot.id})">
+                            <i class="fas fa-print"></i>
+                            列印
+                        </button>
+                    </div>
+                `;
+                
+                qrGrid.appendChild(card);
+                
+                // 生成 QR Code
+                new QRCode(document.getElementById(`qr-${spot.id}`), {
+                    text: qrContent,
+                    width: 180,
+                    height: 180,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            });
+        }
+
+        // 下載單個 QR Code
+        function downloadQR(spotId, spotName) {
+            const qrContainer = document.getElementById(`qr-${spotId}`);
+            const canvas = qrContainer.querySelector('canvas');
+            
+            if (canvas) {
+                // 轉換為圖片並下載
+                const link = document.createElement('a');
+                link.download = `${spotName}_QRCode.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }
+        }
+
+        // 列印單個 QR Code
+        function printSingleQR(spotId) {
+            const card = document.getElementById(`qr-card-${spotId}`);
+            const printWindow = window.open('', '_blank');
+            
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>列印 QR Code</title>
+                    <style>
+                        body {
+                            margin: 0;
+                            padding: 40px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            min-height: 100vh;
+                            font-family: Arial, sans-serif;
+                        }
+                        .print-card {
+                            text-align: center;
+                            border: 2px solid #ddd;
+                            padding: 40px;
+                            border-radius: 16px;
+                        }
+                        h1 {
+                            font-size: 28px;
+                            margin-bottom: 16px;
+                        }
+                        p {
+                            font-size: 14px;
+                            color: #666;
+                            margin-bottom: 24px;
+                        }
+                        img {
+                            max-width: 300px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-card">
+                        ${card.innerHTML}
+                    </div>
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 250);
+        }
+
+        // 列印全部 QR Code
+        function printAllQR() {
+            window.print();
+        }
+
+        // 頁面載入時生成所有 QR Code
+        window.addEventListener('DOMContentLoaded', generateAllQR);
+    </script>
+</body>
+</html>

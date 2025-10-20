@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>景點地圖 | 壽豐尋寶巴</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="game-home">
+    <!-- 導航列 -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <div class="nav-brand-icon">
+                    <i class="fas fa-map"></i>
+                </div>
+                <span>景點地圖</span>
+            </div>
+            <div class="nav-actions">
+                <button class="nav-icon-btn" onclick="filterSpots('all')" title="全部景點">
+                    <i class="fas fa-list"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 篩選標籤 -->
+    <div style="background: white; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <div class="container">
+            <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;">
+                <button class="filter-tag active" data-filter="all" onclick="filterSpots('all')">
+                    <i class="fas fa-globe"></i> 全部
+                </button>
+                <button class="filter-tag" data-filter="nature" onclick="filterSpots('nature')">
+                    <i class="fas fa-leaf"></i> 自然生態
+                </button>
+                <button class="filter-tag" data-filter="culture" onclick="filterSpots('culture')">
+                    <i class="fas fa-torii-gate"></i> 文化體驗
+                </button>
+                <button class="filter-tag" data-filter="special" onclick="filterSpots('special')">
+                    <i class="fas fa-star"></i> 特色體驗
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 景點列表 -->
+    <section style="padding: 20px 16px 100px;">
+        <div class="container">
+            <div id="spotsList" class="spots-list-grid">
+                <!-- 景點卡片將由 JavaScript 生成 -->
+            </div>
+        </div>
+    </section>
+
+    <!-- 底部導航 -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-container">
+            <a href="game-home.html" class="nav-item">
+                <div class="nav-item-icon">
+                    <i class="fas fa-home"></i>
+                </div>
+                <span class="nav-item-label">主頁</span>
+            </a>
+            <a href="map.html" class="nav-item active">
+                <div class="nav-item-icon">
+                    <i class="fas fa-map"></i>
+                </div>
+                <span class="nav-item-label">地圖</span>
+            </a>
+            <a href="collection.html" class="nav-item">
+                <div class="nav-item-icon">
+                    <i class="fas fa-book"></i>
+                </div>
+                <span class="nav-item-label">收藏</span>
+            </a>
+            <a href="profile.html" class="nav-item">
+                <div class="nav-item-icon">
+                    <i class="fas fa-user"></i>
+                </div>
+                <span class="nav-item-label">個人</span>
+            </a>
+        </div>
+    </nav>
+
+    <script src="spots-data.js"></script>
+    <script>
+        // 載入收藏記錄
+        const collection = JSON.parse(localStorage.getItem('collection')) || [];
+        let currentFilter = 'all';
+
+        // 生成景點列表
+        function renderSpots(filter = 'all') {
+            const spotsList = document.getElementById('spotsList');
+            const filteredSpots = filter === 'all' 
+                ? spotsData 
+                : spotsData.filter(spot => spot.route === filter);
+
+            spotsList.innerHTML = filteredSpots.map(spot => {
+                const isCollected = collection.some(c => c.id === spot.id);
+                const difficultyInfo = {
+                    'easy': { text: '簡單', color: '#4caf50', exp: 30 },
+                    'normal': { text: '普通', color: '#ff9800', exp: 50 },
+                    'hard': { text: '困難', color: '#f44336', exp: 80 }
+                };
+                const diff = difficultyInfo[spot.difficulty];
+
+                return `
+                    <div class="spot-list-card ${isCollected ? 'collected' : ''}" onclick="goToSpotDetail(${spot.id})">
+                        <div class="spot-list-image" style="background: linear-gradient(135deg, ${getRouteColor(spot.route)});">
+                            <i class="fas ${spot.icon} fa-3x"></i>
+                            ${isCollected ? '<div class="collected-badge"><i class="fas fa-check-circle"></i></div>' : ''}
+                        </div>
+                        <div class="spot-list-content">
+                            <div class="spot-list-header">
+                                <h3 class="spot-list-title">${spot.name}</h3>
+                                <span class="difficulty-badge" style="background: ${diff.color}">
+                                    ${diff.text} +${diff.exp} EXP
+                                </span>
+                            </div>
+                            <p class="spot-list-desc">${spot.shortDesc}</p>
+                            <div class="spot-list-footer">
+                                <div class="spot-list-info">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>${getRouteLabel(spot.route)}</span>
+                                </div>
+                                ${isCollected 
+                                    ? '<span class="collected-label"><i class="fas fa-check"></i> 已收集</span>'
+                                    : '<span class="go-checkin">前往打卡 <i class="fas fa-arrow-right"></i></span>'
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 篩選功能
+        function filterSpots(filter) {
+            currentFilter = filter;
+            
+            // 更新標籤樣式
+            document.querySelectorAll('.filter-tag').forEach(tag => {
+                tag.classList.remove('active');
+            });
+            document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+            
+            // 重新渲染
+            renderSpots(filter);
+        }
+
+        // 前往景點詳情
+        function goToSpotDetail(spotId) {
+            window.location.href = `spot-detail.html?id=${spotId}`;
+        }
+
+        // 取得路線顏色
+        function getRouteColor(route) {
+            const colors = {
+                'nature': '#66bb6a 0%, #43a047 100%',
+                'culture': '#ffa726 0%, #fb8c00 100%',
+                'special': '#42a5f5 0%, #1e88e5 100%'
+            };
+            return colors[route] || '#7cb342 0%, #aed581 100%';
+        }
+
+        // 取得路線標籤
+        function getRouteLabel(route) {
+            const labels = {
+                'nature': '自然生態',
+                'culture': '文化體驗',
+                'special': '特色體驗'
+            };
+            return labels[route] || '景點';
+        }
+
+        // 初始化
+        renderSpots();
+    </script>
+</body>
+</html>

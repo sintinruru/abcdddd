@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的收藏 | 壽豐尋寶巴</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="collection-page">
+    <!-- 頁首 -->
+    <header class="collection-header">
+        <h1>我的收藏</h1>
+        <p>收集所有景點，成為壽豐探險大師！</p>
+        <div class="collection-stats">
+            <div class="stat-item">
+                <div class="stat-number" id="collectedCount">0</div>
+                <div class="stat-label">已收集</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">14</div>
+                <div class="stat-label">總景點</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 景點網格 -->
+    <div class="collection-content">
+        <div class="collection-grid" id="collectionGrid">
+            <!-- 景點卡片將由 JavaScript 動態生成 -->
+        </div>
+    </div>
+
+    <!-- 底部導航 -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-container">
+            <a href="game-home.html" class="nav-item">
+                <div class="nav-item-icon">
+                    <i class="fas fa-home"></i>
+                </div>
+                <span class="nav-item-label">主頁</span>
+            </a>
+            <a href="map.html" class="nav-item">
+                <div class="nav-item-icon">
+                    <i class="fas fa-map"></i>
+                </div>
+                <span class="nav-item-label">地圖</span>
+            </a>
+            <a href="collection.html" class="nav-item active">
+                <div class="nav-item-icon">
+                    <i class="fas fa-book"></i>
+                </div>
+                <span class="nav-item-label">收藏</span>
+            </a>
+            <a href="profile.html" class="nav-item">
+                <div class="nav-item-icon">
+                    <i class="fas fa-user"></i>
+                </div>
+                <span class="nav-item-label">個人</span>
+            </a>
+        </div>
+    </nav>
+
+    <script src="spots-data.js"></script>
+    <script>
+        // 載入收藏資料
+        function loadCollection() {
+            const collection = JSON.parse(localStorage.getItem('collection')) || [];
+            const collectionGrid = document.getElementById('collectionGrid');
+            
+            // 更新統計
+            document.getElementById('collectedCount').textContent = collection.length;
+
+            // 路線顏色
+            const routeColors = {
+                'nature': '#66bb6a',
+                'culture': '#ffa726',
+                'special': '#42a5f5'
+            };
+
+            // 路線標籤
+            const routeLabels = {
+                'nature': '自然生態',
+                'culture': '文化體驗',
+                'special': '特色體驗'
+            };
+
+            // 生成景點卡片（使用 spots-data.js 的資料）
+            collectionGrid.innerHTML = '';
+            spotsData.forEach(spot => {
+                const isCollected = collection.some(c => c.id === spot.id);
+                
+                const card = document.createElement('div');
+                card.className = 'spot-card';
+                card.innerHTML = `
+                    <div class="spot-image ${isCollected ? '' : 'locked'}" style="background: linear-gradient(135deg, ${routeColors[spot.route]}, ${routeColors[spot.route]}dd);">
+                        <i class="fas ${spot.icon} fa-3x"></i>
+                        ${!isCollected ? '<div class="lock-overlay"><i class="fas fa-lock"></i></div>' : ''}
+                        ${isCollected ? '<div class="collected-badge"><i class="fas fa-check-circle"></i></div>' : ''}
+                    </div>
+                    <div class="spot-info">
+                        <h3 class="spot-name">${spot.name}</h3>
+                        <p class="spot-description">${spot.shortDesc}</p>
+                        <div class="spot-meta">
+                            <span class="route-tag" style="background: ${routeColors[spot.route]}20; color: ${routeColors[spot.route]};">
+                                ${routeLabels[spot.route]}
+                            </span>
+                            <span class="spot-status ${isCollected ? 'collected' : 'locked'}">
+                                ${isCollected ? '✓ 已收集' : '🔒 未收集'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+                
+                // 點擊卡片跳轉到詳情頁
+                card.onclick = () => {
+                    window.location.href = `spot-detail.html?id=${spot.id}`;
+                };
+                
+collectionGrid.appendChild(card);
+            });
+        }
+
+        // 初始化
+        loadCollection();
+    </script>
+</body>
+</html>

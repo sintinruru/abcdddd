@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>景點打卡 | 壽豐尋寶巴</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="spot-detail-page">
+    <!-- 導航列 -->
+    <nav class="navbar">
+        <div class="container">
+            <button class="nav-icon-btn" onclick="history.back()" style="margin-right: auto;">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="nav-brand">
+                <span>景點打卡</span>
+            </div>
+            <div style="width: 40px;"></div>
+        </div>
+    </nav>
+
+    <!-- 景點資訊 -->
+    <div class="checkin-spot-info">
+        <div class="checkin-spot-icon" id="checkinIcon">
+            <i class="fas fa-mountain"></i>
+        </div>
+        <h2 class="checkin-spot-name" id="checkinSpotName">景點名稱</h2>
+        <p class="checkin-spot-desc" id="checkinSpotDesc">景點描述</p>
+    </div>
+
+    <!-- 打卡方式選擇 -->
+    <div class="checkin-methods">
+        <div class="container">
+            <h3 class="methods-title">選擇打卡方式</h3>
+            
+            <!-- QR Code 掃描 -->
+            <div class="method-card">
+                <div class="method-icon">
+                    <i class="fas fa-qrcode"></i>
+                </div>
+                <div class="method-content">
+                    <h4>掃描 QR Code</h4>
+                    <p>到達景點後掃描現場的 QR Code</p>
+                </div>
+                <button class="method-btn" onclick="startQRScan()">
+                    <i class="fas fa-camera"></i>
+                    開始掃描
+                </button>
+            </div>
+
+            <!-- 模擬打卡 -->
+            <div class="method-card">
+                <div class="method-icon" style="background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);">
+                    <i class="fas fa-vial"></i>
+                </div>
+                <div class="method-content">
+                    <h4>模擬打卡</h4>
+                    <p>開發測試用，直接解鎖景點</p>
+                </div>
+                <button class="method-btn" style="background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);" onclick="simulateCheckin()">
+                    <i class="fas fa-bolt"></i>
+                    模擬打卡
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR 掃描區（預設隱藏） -->
+    <div class="qr-scanner-container" id="qrScanner" style="display: none;">
+        <div class="qr-scanner-header">
+            <button class="qr-close-btn" onclick="closeQRScan()">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3>掃描 QR Code</h3>
+        </div>
+        <div class="qr-reader-wrapper">
+            <div id="qr-reader"></div>
+        </div>
+        <div class="qr-scanner-hint">
+            <i class="fas fa-info-circle"></i>
+            將 QR Code 對準框內即可自動掃描
+        </div>
+        <div class="qr-scanner-help">
+            <p><strong>找不到 QR Code？</strong></p>
+            <p>請確認景點是否已設置 QR Code 標示牌</p>
+            <button class="help-btn" onclick="closeQRScan()">使用模擬打卡</button>
+        </div>
+    </div>
+
+    <!-- 成功動畫（預設隱藏） -->
+    <div class="success-modal" id="successModal" style="display: none;">
+        <div class="success-content">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2 class="success-title">收集成功！</h2>
+            <p class="success-message">
+                恭喜你收集了 <strong id="successSpotName"></strong>
+            </p>
+            <div class="success-reward">
+                <div class="reward-item">
+                    <i class="fas fa-star"></i>
+                    <span>+<span id="successExp">50</span> EXP</span>
+                </div>
+                <div class="reward-item" id="levelUpReward" style="display: none;">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>升級到 Level <span id="newLevel">2</span>！</span>
+                </div>
+            </div>
+            <button class="success-btn" onclick="closeSuccess()">
+                <i class="fas fa-book"></i>
+                查看收藏
+            </button>
+            <button class="success-btn-secondary" onclick="backToMap()">
+                繼續探索
+            </button>
+        </div>
+    </div>
+
+    <script src="spots-data.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script>
+        // 從 URL 取得景點 ID
+        const urlParams = new URLSearchParams(window.location.search);
+        const spotId = parseInt(urlParams.get('id'));
+        
+        // 取得景點資料
+        const spot = spotsData.find(s => s.id === spotId);
+        
+        if (!spot) {
+            alert('找不到景點資料！');
+            window.location.href = 'map.html';
+        }
+
+        // 檢查是否已收集
+        const collection = JSON.parse(localStorage.getItem('collection')) || [];
+        if (collection.some(c => c.id === spotId)) {
+            alert('你已經收集過這個景點了！');
+            window.location.href = `spot-detail.html?id=${spotId}`;
+        }
+
+        // 顯示景點資訊
+        document.getElementById('checkinIcon').style.background = 
+            `linear-gradient(135deg, ${getRouteColor(spot.route)})`;
+        document.getElementById('checkinIcon').innerHTML = `<i class="fas ${spot.icon}"></i>`;
+        document.getElementById('checkinSpotName').textContent = spot.name;
+        document.getElementById('checkinSpotDesc').textContent = spot.shortDesc;
+
+        // QR 掃描器
+        let html5QrcodeScanner = null;
+
+        // 開始 QR 掃描
+        function startQRScan() {
+            document.getElementById('qrScanner').style.display = 'flex';
+            
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                "qr-reader",
+                { 
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0,
+                    formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ]
+                },
+                /* verbose= */ false
+            );
+
+            html5QrcodeScanner.render(onScanSuccess, onScanError);
+        }
+
+        // 掃描成功
+        function onScanSuccess(decodedText, decodedResult) {
+            console.log('掃描到的內容:', decodedText);
+            
+            // 驗證 QR Code 內容
+            // 格式: SHOUFENG_SPOT_{景點ID}
+            const expectedCode = `SHOUFENG_SPOT_${spotId}`;
+            
+            if (decodedText === expectedCode) {
+                // 正確的 QR Code
+                html5QrcodeScanner.clear();
+                closeQRScan();
+                completeCheckin('qr');
+            } else if (decodedText.startsWith('SHOUFENG_SPOT_')) {
+                // 是壽豐景點的 QR Code，但不是這個景點
+                const scannedId = decodedText.split('_')[2];
+                const scannedSpot = spotsData.find(s => s.id == scannedId);
+                const spotName = scannedSpot ? scannedSpot.name : '其他景點';
+                
+                html5QrcodeScanner.pause();
+                
+                if (confirm(`這是「${spotName}」的 QR Code！\n\n要改為打卡「${spotName}」嗎？`)) {
+                    window.location.href = `checkin.html?id=${scannedId}`;
+                } else {
+                    html5QrcodeScanner.resume();
+                }
+            } else {
+                // 不是壽豐景點的 QR Code
+                alert('❌ 這不是壽豐尋寶巴的景點 QR Code！\n\n請掃描正確的景點 QR Code。');
+            }
+        }
+
+        // 掃描錯誤（持續掃描時的正常狀態）
+        function onScanError(error) {
+            // 忽略持續的掃描錯誤訊息
+            // console.log(error);
+        }
+
+        // 關閉 QR 掃描
+        function closeQRScan() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear();
+            }
+            document.getElementById('qrScanner').style.display = 'none';
+        }
+
+        // 模擬打卡
+        function simulateCheckin() {
+            if (confirm(`確定要模擬打卡「${spot.name}」嗎？\n\n⚠️ 這是測試功能，實際使用時請掃描 QR Code。`)) {
+                completeCheckin('simulation');
+            }
+        }
+
+        // 完成打卡
+        function completeCheckin(method = 'simulation') {
+            // 取得玩家資料
+            let playerData = JSON.parse(localStorage.getItem('player'));
+            if (!playerData) {
+                alert('找不到玩家資料！');
+                window.location.href = 'create-character.html';
+                return;
+            }
+
+            // 加入收藏
+            const newCollection = {
+                id: spot.id,
+                name: spot.name,
+                collectedAt: new Date().toISOString(),
+                method: method, // 'qr' or 'simulation'
+                exp: spot.exp
+            };
+            collection.push(newCollection);
+            localStorage.setItem('collection', JSON.stringify(collection));
+
+            // 增加經驗值
+            const oldLevel = playerData.level || 1;
+            playerData.exp = (playerData.exp || 0) + spot.exp;
+
+            // 檢查升級
+            let newLevel = oldLevel;
+            for (let level in levelRequirements) {
+                if (playerData.exp >= levelRequirements[level]) {
+                    newLevel = parseInt(level);
+                }
+            }
+
+            const leveledUp = newLevel > oldLevel;
+            playerData.level = newLevel;
+
+            // 儲存玩家資料
+            localStorage.setItem('player', JSON.stringify(playerData));
+
+            // 顯示成功畫面
+            showSuccess(spot.name, spot.exp, leveledUp, newLevel);
+        }
+
+        // 顯示成功畫面
+        function showSuccess(spotName, exp, leveledUp, newLevel) {
+            document.getElementById('successSpotName').textContent = spotName;
+            document.getElementById('successExp').textContent = exp;
+            
+            if (leveledUp) {
+                document.getElementById('levelUpReward').style.display = 'flex';
+                document.getElementById('newLevel').textContent = newLevel;
+            }
+
+            document.getElementById('successModal').style.display = 'flex';
+            
+            // 播放音效（如果有）
+            // playSuccessSound();
+        }
+
+        // 關閉成功畫面
+        function closeSuccess() {
+            window.location.href = 'collection.html';
+        }
+
+        // 返回地圖
+        function backToMap() {
+            window.location.href = 'map.html';
+        }
+
+        // 取得路線顏色
+        function getRouteColor(route) {
+            const colors = {
+                'nature': '#66bb6a 0%, #43a047 100%',
+                'culture': '#ffa726 0%, #fb8c00 100%',
+                'special': '#42a5f5 0%, #1e88e5 100%'
+            };
+            return colors[route] || '#7cb342 0%, #aed581 100%';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>遊戲主頁 | 壽豐尋寶巴</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="game-home">
+    <!-- 導航列 -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <div class="nav-brand-icon">
+                    <i class="fas fa-map-marked-alt"></i>
+                </div>
+                <span>壽豐尋寶巴</span>
+            </div>
+            <div class="nav-actions">
+                <button class="nav-icon-btn" onclick="location.href='chat.html'" title="AI 助手">
+                    <i class="fas fa-robot"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 玩家資訊卡 -->
+    <div class="player-info-card">
+        <div class="player-avatar">
+            <i class="fas fa-hiking" id="playerAvatarIcon"></i>
+        </div>
+        <div class="player-details">
+            <div class="player-name" id="playerName">冒險者</div>
+            <div class="player-level">
+                等級 <span id="playerLevel">1</span> | 
+                經驗值 <span id="playerExp">0</span> / <span id="playerMaxExp">100</span>
+            </div>
+            <div class="exp-bar">
+                <div class="exp-fill" id="expFill" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 路線選擇區 -->
+    <section class="routes-section">
+        <div class="section-header">
+            <h2 class="section-title">選擇你的冒險路線</h2>
+            <p class="section-description">探索壽豐的自然、文化與特色景點</p>
+        </div>
+
+        <div class="routes-grid">
+            <!-- 路線 1: 自然生態 -->
+            <div class="route-card" onclick="selectRoute('nature')">
+                <div class="route-image" style="background: linear-gradient(135deg, #66bb6a 0%, #43a047 100%);">
+                    <i class="fas fa-mountain"></i>
+                    <div class="route-badge">自然生態</div>
+                </div>
+                <div class="route-content">
+                    <h3 class="route-title">自然生態之旅</h3>
+                    <p class="route-description">
+                        探索鯉魚潭、雲山水、白鮑溪等自然美景
+                    </p>
+                    <div class="route-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="nature-progress" style="width: 0%"></div>
+                        </div>
+                        <span class="progress-text" id="nature-text">0/5</span>
+                    </div>
+                    <div class="route-spots-count">
+                        <i class="fas fa-map-pin"></i>
+                        <span>5個景點：樹湖瀑布、東華大學、白鮑溪等</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 路線 2: 文化體驗 -->
+            <div class="route-card" onclick="selectRoute('culture')">
+                <div class="route-image" style="background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);">
+                    <i class="fas fa-torii-gate"></i>
+                    <div class="route-badge">文化體驗</div>
+                </div>
+                <div class="route-content">
+                    <h3 class="route-title">文化體驗之旅</h3>
+                    <p class="route-description">
+                        品味日式建築、客家文化與鐵道風情
+                    </p>
+                    <div class="route-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="culture-progress" style="width: 0%"></div>
+                        </div>
+                        <span class="progress-text" id="culture-text">0/5</span>
+                    </div>
+                    <div class="route-spots-count">
+                        <i class="fas fa-map-pin"></i>
+                        <span>5個景點：壽豐火車站、豐田火車站等</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 路線 3: 特色體驗 -->
+            <div class="route-card" onclick="selectRoute('special')">
+                <div class="route-image" style="background: linear-gradient(135deg, #42a5f5 0%, #1e88e5 100%);">
+                    <i class="fas fa-fish"></i>
+                    <div class="route-badge">特色體驗</div>
+                </div>
+                <div class="route-content">
+                    <h3 class="route-title">特色體驗之旅</h3>
+                    <p class="route-description">
+                        享受在地美食、手作體驗與獨特活動
+                    </p>
+                    <div class="route-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="special-progress" style="width: 0%"></div>
+                        </div>
+                        <span class="progress-text" id="special-text">0/4</span>
+                    </div>
+                    <div class="route-spots-count">
+                        <i class="fas fa-map-pin"></i>
+                        <span>4個景點：豐春冰菓店、五味屋、立川漁場等</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 底部導航 -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-container">
+            <a href="game-home.html" class="nav-item active">
+                <div class="nav-item-icon">
+                    <i class="fas fa-home"></i>
+                </div>
+                <span class="nav-item-label">主頁</span>
+            </a>
+            <a href="map.html" class="nav-item">
+                <div class="nav-item-icon">
+                    <i class="fas fa-map"></i>
+                </div>
+                <span class="nav-item-label">地圖</span>
+            </a>
+            <a href="collection.html" class="nav-item">
+                <div class="nav-item-icon">
+                    <i class="fas fa-book"></i>
+                </div>
+                <span class="nav-item-label">收藏</span>
+            </a>
+            <a href="profile.html" class="nav-item">
+                <div class="nav-item-icon">
+                    <i class="fas fa-user"></i>
+                </div>
+                <span class="nav-item-label">個人</span>
+            </a>
+        </div>
+    </nav>
+
+    <script>
+        // 頭像圖標對應
+        const avatarIcons = {
+            'hiker': 'fa-hiking',
+            'cyclist': 'fa-biking',
+            'photographer': 'fa-camera',
+            'explorer': 'fa-compass',
+            'backpacker': 'fa-backpack',
+            'traveler': 'fa-suitcase-rolling',
+            'nature-lover': 'fa-leaf',
+            'star': 'fa-star'
+        };
+
+        // 載入玩家資料
+        function loadPlayerData() {
+            const playerData = JSON.parse(localStorage.getItem('player'));
+            
+            if (!playerData) {
+                window.location.href = 'create-character.html';
+                return;
+            }
+
+            // 顯示玩家資訊
+            document.getElementById('playerName').textContent = playerData.name;
+            document.getElementById('playerLevel').textContent = playerData.level || 1;
+            document.getElementById('playerExp').textContent = playerData.exp || 0;
+            
+            const maxExp = (playerData.level || 1) * 100;
+            document.getElementById('playerMaxExp').textContent = maxExp;
+            
+            const expPercent = ((playerData.exp || 0) / maxExp) * 100;
+            document.getElementById('expFill').style.width = expPercent + '%';
+
+            // 設定頭像
+            const avatarIcon = avatarIcons[playerData.avatar] || 'fa-hiking';
+            document.getElementById('playerAvatarIcon').className = 'fas ' + avatarIcon;
+        }
+
+        // 載入路線進度
+        function loadRouteProgress() {
+            const collection = JSON.parse(localStorage.getItem('collection')) || [];
+            
+            // 定義每條路線包含的景點 ID（對應14個新景點）
+            const routes = {
+                nature: [5, 10, 12, 13, 14],  // 樹湖瀑布、東華、白鮑溪、鯉魚潭、雲山水
+                culture: [1, 2, 7, 8, 9],     // 壽豐站、豐田站、碧蓮寺、豐裡國小、文史館
+                special: [3, 4, 6, 11]        // 豐春冰菓店、五味屋、立川漁場、琢玉工坊
+            };
+
+            // 計算各路線進度
+            Object.keys(routes).forEach(routeKey => {
+                const spotIds = routes[routeKey];
+                const collected = spotIds.filter(id => 
+                    collection.some(c => c.id === id)
+                ).length;
+                
+                const percentage = (collected / spotIds.length) * 100;
+                document.getElementById(routeKey + '-progress').style.width = percentage + '%';
+                document.getElementById(routeKey + '-text').textContent = collected + '/' + spotIds.length;
+            });
+        }
+
+        // 選擇路線
+        function selectRoute(routeType) {
+            alert('地圖功能開發中！即將帶你前往 ' + routeType + ' 路線');
+            // 之後會導向: window.location.href = 'map.html?route=' + routeType;
+        }
+
+        // 初始化
+        loadPlayerData();
+        loadRouteProgress();
+    </script>
+</body>
+</html>

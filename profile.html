@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>個人資料 | 壽豐尋寶巴</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="collection-page">
+    <!-- 頁首 -->
+    <header class="collection-header">
+        <div class="player-avatar" style="width: 100px; height: 100px; font-size: 50px; margin: 0 auto 20px;">
+            <i class="fas fa-hiking" id="profileAvatarIcon"></i>
+        </div>
+        <h1 id="profileName">冒險者</h1>
+        <p>等級 <span id="profileLevel">1</span> 探險家</p>
+        <div class="collection-stats" style="margin-top: 30px;">
+            <div class="stat-item">
+                <div class="stat-number" id="profileCollected">0</div>
+                <div class="stat-label">已收集</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="profileExp">0</div>
+                <div class="stat-label">經驗值</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="profileDays">0</div>
+                <div class="stat-label">冒險天數</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 內容區 -->
+    <div class="collection-content">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <!-- 成就區塊 -->
+            <div style="background: white; border-radius: 20px; padding: 30px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.08);">
+                <h2 style="font-size: 24px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-trophy" style="color: #ffa726;"></i>
+                    成就徽章
+                </h2>
+                <div id="achievementsList" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                    <!-- 成就將由 JavaScript 生成 -->
+                </div>
+            </div>
+
+            <!-- 最近收集 -->
+            <div style="background: white; border-radius: 20px; padding: 30px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.08);">
+                <h2 style="font-size: 24px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-clock" style="color: #42a5f5;"></i>
+                    最近收集
+                </h2>
+                <div id="recentCollections">
+                    <!-- 最近收集將由 JavaScript 生成 -->
+                </div>
+            </div>
+
+            <!-- 操作按鈕 -->
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-secondary" style="flex: 1;" onclick="resetProgress()">
+                    <i class="fas fa-redo"></i>
+                    重置進度
+                </button>
+                <button class="btn btn-primary" style="flex: 1;" onclick="location.href='chat.html'">
+                    <i class="fas fa-robot"></i>
+                    AI 助手
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部導航 -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-container">
+            <a href="game-home.html" class="nav-item">
+                <div class="nav-item-icon">
+                    <i class="fas fa-home"></i>
+                </div>
+                <span class="nav-item-label">主頁</span>
+            </a>
+            <a href="map.html" class="nav-item">
+                <div class="nav-item-icon">
+                    <i class="fas fa-map"></i>
+                </div>
+                <span class="nav-item-label">地圖</span>
+            </a>
+            <a href="collection.html" class="nav-item">
+                <div class="nav-item-icon">
+                    <i class="fas fa-book"></i>
+                </div>
+                <span class="nav-item-label">收藏</span>
+            </a>
+            <a href="profile.html" class="nav-item active">
+                <div class="nav-item-icon">
+                    <i class="fas fa-user"></i>
+                </div>
+                <span class="nav-item-label">個人</span>
+            </a>
+        </div>
+    </nav>
+
+    <script>
+        // 頭像圖標對應
+        const avatarIcons = {
+            'hiker': 'fa-hiking',
+            'cyclist': 'fa-biking',
+            'photographer': 'fa-camera',
+            'explorer': 'fa-compass',
+            'backpacker': 'fa-backpack',
+            'traveler': 'fa-suitcase-rolling',
+            'nature-lover': 'fa-leaf',
+            'star': 'fa-star'
+        };
+
+        // 成就系統
+        const achievements = [
+            { id: 'first-spot', name: '初探壽豐', icon: 'fa-map-marker-alt', requirement: 1 },
+            { id: 'half-way', name: '半程旅人', icon: 'fa-hiking', requirement: 4 },
+            { id: 'master', name: '探險大師', icon: 'fa-crown', requirement: 8 },
+            { id: 'nature-lover', name: '自然愛好者', icon: 'fa-leaf', requirement: 'nature-complete' },
+            { id: 'culture-explorer', name: '文化探索者', icon: 'fa-torii-gate', requirement: 'culture-complete' },
+            { id: 'special-hunter', name: '特色獵人', icon: 'fa-star', requirement: 'special-complete' }
+        ];
+
+        // 載入個人資料
+        function loadProfile() {
+            const playerData = JSON.parse(localStorage.getItem('player'));
+            const collection = JSON.parse(localStorage.getItem('collection')) || [];
+            
+            if (!playerData) {
+                window.location.href = 'create-character.html';
+                return;
+            }
+
+            // 顯示玩家資訊
+            document.getElementById('profileName').textContent = playerData.name;
+            document.getElementById('profileLevel').textContent = playerData.level || 1;
+            document.getElementById('profileExp').textContent = playerData.exp || 0;
+            document.getElementById('profileCollected').textContent = collection.length;
+
+            // 計算冒險天數
+            const createdDate = new Date(playerData.createdAt);
+            const today = new Date();
+            const days = Math.floor((today - createdDate) / (1000 * 60 * 60 * 24));
+            document.getElementById('profileDays').textContent = days;
+
+            // 設定頭像
+            const avatarIcon = avatarIcons[playerData.avatar] || 'fa-hiking';
+            document.getElementById('profileAvatarIcon').className = 'fas ' + avatarIcon;
+
+            // 載入成就
+            loadAchievements(collection);
+
+            // 載入最近收集
+            loadRecentCollections(collection);
+        }
+
+        // 載入成就
+        function loadAchievements(collection) {
+            const achievementsList = document.getElementById('achievementsList');
+            
+            achievements.forEach(achievement => {
+                let unlocked = false;
+                
+                if (typeof achievement.requirement === 'number') {
+                    unlocked = collection.length >= achievement.requirement;
+                } else if (achievement.requirement === 'nature-complete') {
+                    const natureSpots = ['鯉魚潭', '雲山水', '慕谷慕魚'];
+                    unlocked = natureSpots.every(spot => collection.some(c => c.name === spot));
+                } else if (achievement.requirement === 'culture-complete') {
+                    const cultureSpots = ['花蓮糖廠', '壽豐車站', '東華大學'];
+                    unlocked = cultureSpots.every(spot => collection.some(c => c.name === spot));
+                } else if (achievement.requirement === 'special-complete') {
+                    const specialSpots = ['立川漁場', '豐田文史館'];
+                    unlocked = specialSpots.every(spot => collection.some(c => c.name === spot));
+                }
+
+                const badge = document.createElement('div');
+                badge.style.cssText = `
+                    text-align: center;
+                    padding: 20px;
+                    background: ${unlocked ? 'linear-gradient(135deg, #7cb342 0%, #aed581 100%)' : '#f5f5f5'};
+                    border-radius: 12px;
+                    color: ${unlocked ? 'white' : '#999'};
+                `;
+                badge.innerHTML = `
+                    <i class="fas ${achievement.icon}" style="font-size: 32px; margin-bottom: 8px;"></i>
+                    <div style="font-size: 12px; font-weight: 600;">${achievement.name}</div>
+                `;
+                achievementsList.appendChild(badge);
+            });
+        }
+
+        // 載入最近收集
+        function loadRecentCollections(collection) {
+            const recentList = document.getElementById('recentCollections');
+            
+            if (collection.length === 0) {
+                recentList.innerHTML = '<p style="color: #999; text-align: center;">還沒有收集任何景點</p>';
+                return;
+            }
+
+            const recent = collection.slice(-5).reverse();
+            recentList.innerHTML = recent.map(item => {
+                const date = new Date(item.collectedAt);
+                return `
+                    <div style="padding: 12px 0; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 600; margin-bottom: 4px;">${item.name}</div>
+                            <div style="font-size: 12px; color: #999;">
+                                ${date.toLocaleDateString('zh-TW')} ${date.toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit'})}
+                            </div>
+                        </div>
+                        <i class="fas fa-check-circle" style="color: #7cb342; font-size: 20px;"></i>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 重置進度
+        function resetProgress() {
+            if (confirm('確定要重置所有進度嗎？此操作無法復原！')) {
+                localStorage.removeItem('player');
+                localStorage.removeItem('collection');
+                alert('進度已重置！');
+                window.location.href = 'index.html';
+            }
+        }
+
+        // 初始化
+        loadProfile();
+    </script>
+</body>
+</html>
