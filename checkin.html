@@ -120,7 +120,7 @@
     </div>
 
     <script src="spots-data.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script>
         // 從 URL 取得景點 ID
         const urlParams = new URLSearchParams(window.location.search);
@@ -153,16 +153,28 @@
 
         // 開始 QR 掃描
         function startQRScan() {
-            document.getElementById('qrScanner').style.display = 'flex';
+            const scannerDiv = document.getElementById('qrScanner');
+            scannerDiv.style.display = 'flex';
+            
+            // 手機優化配置
+            const config = { 
+                fps: 10,
+                qrbox: function(viewfinderWidth, viewfinderHeight) {
+                    // 動態計算掃描框大小（適應手機螢幕）
+                    let minEdgePercentage = 0.7;
+                    let minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+                    let qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
+                    return {
+                        width: qrboxSize,
+                        height: qrboxSize
+                    };
+                },
+                aspectRatio: 1.0
+            };
             
             html5QrcodeScanner = new Html5QrcodeScanner(
                 "qr-reader",
-                { 
-                    fps: 10,
-                    qrbox: { width: 250, height: 250 },
-                    aspectRatio: 1.0,
-                    formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ]
-                },
+                config,
                 /* verbose= */ false
             );
 
@@ -172,6 +184,12 @@
         // 掃描成功
         function onScanSuccess(decodedText, decodedResult) {
             console.log('掃描到的內容:', decodedText);
+            console.log('掃描結果:', decodedResult);
+            
+            // 暫停掃描
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.pause(true);
+            }
             
             // 驗證 QR Code 內容
             // 格式: SHOUFENG_SPOT_{景點ID}
@@ -188,23 +206,32 @@
                 const scannedSpot = spotsData.find(s => s.id == scannedId);
                 const spotName = scannedSpot ? scannedSpot.name : '其他景點';
                 
-                html5QrcodeScanner.pause();
-                
                 if (confirm(`這是「${spotName}」的 QR Code！\n\n要改為打卡「${spotName}」嗎？`)) {
+                    html5QrcodeScanner.clear();
                     window.location.href = `checkin.html?id=${scannedId}`;
                 } else {
-                    html5QrcodeScanner.resume();
+                    // 繼續掃描
+                    if (html5QrcodeScanner) {
+                        html5QrcodeScanner.resume();
+                    }
                 }
             } else {
                 // 不是壽豐景點的 QR Code
                 alert('❌ 這不是壽豐尋寶巴的景點 QR Code！\n\n請掃描正確的景點 QR Code。');
+                
+                // 繼續掃描
+                if (html5QrcodeScanner) {
+                    html5QrcodeScanner.resume();
+                }
             }
         }
 
         // 掃描錯誤（持續掃描時的正常狀態）
         function onScanError(error) {
-            // 忽略持續的掃描錯誤訊息
-            // console.log(error);
+            // 只在非持續性錯誤時輸出
+            if (error && !error.includes('NotFoundException')) {
+                console.log('掃描錯誤:', error);
+            }
         }
 
         // 關閉 QR 掃描
